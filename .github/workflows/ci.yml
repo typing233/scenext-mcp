@@ -42,7 +42,8 @@ jobs:
         python tests/test_basic.py
         
     - name: 测试包构建
-      run: |        pip install build
+      run: |
+        pip install build
         python -m build
         
   publish:
