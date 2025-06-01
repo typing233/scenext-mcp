@@ -19,7 +19,7 @@ import time
 load_dotenv()
 
 # 版本信息
-__version__ = "1.0.0"
+__version__ = "1.0.2"
 
 def setup_logging():
     """配置日志"""
@@ -39,35 +39,34 @@ mcp = FastMCP(
 )
 
 # 配置
-API_BASE_URL = os.getenv("SCENEXT_API_BASE_URL", "https://api.scenext.cn/api")
+API_BASE_URL = "https://api.scenext.cn/api"
 API_KEY = os.getenv("SCENEXT_API_KEY", "YOUR_API_KEY")
 DEFAULT_QUALITY = os.getenv("SCENEXT_DEFAULT_QUALITY", "m")
 
 @mcp.tool()
 async def gen_video(
-    question: str,
+    question: str = "",
     answer: str = "",
     question_images: Optional[List[str]] = None,
     answer_images: Optional[List[str]] = None,
-    quality: str = DEFAULT_QUALITY,
-    notify_url: Optional[str] = None
+    quality: str = DEFAULT_QUALITY
 ) -> Dict[str, Any]:
     """
     生成教学视频
     
     Args:
-        question: 问题内容（必填）
-        answer: 答案内容（可选）
-        question_images: 问题相关图片URL列表（可选）
-        answer_images: 答案相关图片URL列表（可选）
+        question: 问题内容（文本形式），question和questionImages中至少输入一个
+        answer: 参考答案（文本形式）：确保生成的讲解内容准确（可选）
+        question_images: 问题内容（图片形式），输入图片的URL或者base64（可选）
+        answer_images: 参考答案（图片形式），输入图片的URL或者base64（可选）
         quality: 视频质量，可选值：l(低)、m(中)、h(高)，默认为配置的默认质量
-        notify_url: 回调通知URL（可选）
     
     Returns:
         包含任务ID和状态的字典
     """
-    if not question.strip():
-        return {"error": "问题内容不能为空"}
+    # 验证至少有question或questionImages其中一个
+    if not question.strip() and not (question_images and len(question_images) > 0):
+        return {"error": "question和questionImages中至少输入一个"}
     
     url = f"{API_BASE_URL}/gen_video"
     headers = {
@@ -82,9 +81,7 @@ async def gen_video(
         "answerImages": answer_images or [],
         "quality": quality,
     }
-    
-    if notify_url:
-        data["notify_url"] = notify_url
+
 
     try:
         async with aiohttp.ClientSession() as session:
@@ -92,7 +89,19 @@ async def gen_video(
                 if response.status == 200:
                     result = await response.json()
                     logger.info(f"视频生成请求成功: {result}")
-                    return result
+                    
+                    # 根据API文档处理响应格式
+                    if result.get("status") == "success":
+                        return {
+                            "status": "success",
+                            "task_id": result.get("data", {}).get("task_id"),
+                            "message": "视频生成任务创建成功"
+                        }
+                    else:
+                        return {
+                            "error": "API返回错误状态",
+                            "details": result
+                        }
                 else:
                     error_text = await response.text()
                     logger.error(f"API请求失败: {response.status} - {error_text}")
@@ -117,6 +126,10 @@ async def query_video_status(task_id: str) -> Dict[str, Any]:
     
     Returns:
         包含任务状态信息的字典
+        状态说明：
+        - IN_PROGRESS: 任务正在处理中，可以继续轮询
+        - COMPLETED: 任务已成功完成，可以获取结果
+        - FAILED: 任务处理失败，请检查错误信息
     """
     if not task_id.strip():
         return {"error": "任务ID不能为空"}
@@ -132,7 +145,15 @@ async def query_video_status(task_id: str) -> Dict[str, Any]:
                 if response.status == 200:
                     result = await response.json()
                     logger.info(f"状态查询成功: {result}")
-                    return result
+                    
+                    # 根据API文档处理响应格式
+                    if result.get("status") == "success":
+                        return result.get("data", {})
+                    else:
+                        return {
+                            "error": "API返回错误状态",
+                            "details": result
+                        }
                 else:
                     error_text = await response.text()
                     logger.error(f"状态查询失败: {response.status} - {error_text}")
@@ -146,44 +167,6 @@ async def query_video_status(task_id: str) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"未知错误: {e}")
         return {"error": f"未知错误: {str(e)}"}
-
-@mcp.tool()
-async def get_video_result(task_id: str) -> Dict[str, Any]:
-    """
-    获取已完成视频的结果
-    
-    Args:
-        task_id: 视频生成任务ID
-    
-    Returns:
-        包含视频下载链接和相关信息的字典
-    """
-    if not task_id.strip():
-        return {"error": "任务ID不能为空"}
-    
-    # 首先查询状态
-    status_result = await query_video_status(task_id)
-    
-    if "error" in status_result:
-        return status_result
-    
-    # 检查任务是否完成
-    if status_result.get("status") == "completed":
-        return {
-            "task_id": task_id,
-            "status": "completed",
-            "video_url": status_result.get("video_url"),
-            "thumbnail_url": status_result.get("thumbnail_url"),
-            "duration": status_result.get("duration"),
-            "created_at": status_result.get("created_at"),
-            "completed_at": status_result.get("completed_at")
-        }
-    else:
-        return {
-            "task_id": task_id,
-            "status": status_result.get("status", "unknown"),
-            "message": "视频还未完成生成，请稍后再试"
-        }
 
 @mcp.tool()
 async def health_check() -> Dict[str, Any]:
@@ -205,7 +188,7 @@ async def health_check() -> Dict[str, Any]:
     try:
         async with aiohttp.ClientSession() as session:
             # 尝试访问API根路径或健康检查端点
-            test_url = f"{API_BASE_URL.replace('/api', '')}"
+            test_url = "https://api.scenext.cn"
             async with session.get(test_url, timeout=5) as response:
                 health_info["api_connectivity"] = response.status < 500
                 health_info["api_response_status"] = response.status
@@ -227,7 +210,6 @@ def main():
   
 环境变量配置:
   SCENEXT_API_KEY         - Scenext API密钥（必填）
-  SCENEXT_API_BASE_URL    - API基础URL（可选）
   SCENEXT_DEFAULT_QUALITY - 默认视频质量：l/m/h（可选）
   SCENEXT_LOG_LEVEL       - 日志级别（可选）
         """

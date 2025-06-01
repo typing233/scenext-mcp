@@ -8,8 +8,8 @@ AI视频生成服务的模型上下文协议服务器
 
 from ._version import __version__
 
-__author__ = "Scenext Developer"
-__email__ = "developer@scenext.cn"
+__author__ = "Scenext"
+__email__ = "support@lynkframe.com"
 __description__ = "Scenext MCP Server - AI视频生成服务的模型上下文协议服务器"
 
 from .server import main
