@@ -30,8 +30,6 @@ pip install scenext-mcp
 
 - `gen_video` - 生成教学视频
 - `query_video_status` - 查询视频生成状态  
-- `get_video_result` - 获取生成的视频结果
-- `health_check` - 服务器健康检查
 
 ## 开发
 

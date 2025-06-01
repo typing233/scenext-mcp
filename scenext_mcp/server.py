@@ -14,12 +14,11 @@ from typing import List, Optional, Dict, Any
 import logging
 from dotenv import load_dotenv
 import time
+from ._version import __version__
 
 # 加载环境变量
 load_dotenv()
 
-# 版本信息
-__version__ = "1.0.2"
 
 def setup_logging():
     """配置日志"""
@@ -168,35 +167,6 @@ async def query_video_status(task_id: str) -> Dict[str, Any]:
         logger.error(f"未知错误: {e}")
         return {"error": f"未知错误: {str(e)}"}
 
-@mcp.tool()
-async def health_check() -> Dict[str, Any]:
-    """
-    健康检查 - 检查服务器和API连接状态
-    
-    Returns:
-        服务器状态信息
-    """
-    health_info = {
-        "server_version": __version__,
-        "server_status": "running",
-        "timestamp": time.time(),
-        "api_base_url": API_BASE_URL,
-        "api_key_configured": API_KEY != "YOUR_API_KEY"
-    }
-    
-    # 简单的API连通性测试
-    try:
-        async with aiohttp.ClientSession() as session:
-            # 尝试访问API根路径或健康检查端点
-            test_url = "https://api.scenext.cn"
-            async with session.get(test_url, timeout=5) as response:
-                health_info["api_connectivity"] = response.status < 500
-                health_info["api_response_status"] = response.status
-    except Exception as e:
-        health_info["api_connectivity"] = False
-        health_info["api_error"] = str(e)
-    
-    return health_info
 
 def main():
     """CLI入口点"""

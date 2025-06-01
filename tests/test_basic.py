@@ -29,7 +29,7 @@ def test_tools_registration():
         from scenext_mcp.server import mcp
         
         # 检查工具是否正确注册
-        expected_tools = ['gen_video', 'query_video_status', 'health_check']
+        expected_tools = ['gen_video', 'query_video_status']
         
         # 获取注册的工具（这需要访问内部 API）
         tools = mcp._tool_manager.list_tools()
