@@ -17,7 +17,7 @@ pip install scenext-mcp
   "mcpServers": {
     "scenext": {
       "command": "uvx",
-      "args": ["scenext-mcp"],
+      "args": ["-y","scenext-mcp"],
       "env": {
         "SCENEXT_API_KEY": "your_api_key_here"
       }
