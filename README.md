@@ -26,6 +26,19 @@ pip install scenext-mcp
 }
 ```
 
+## 获取API KEY
+
+### 第一步：注册账户
+
+访问 [scenext.cn](https://scenext.cn) 注册您的账户。
+
+### 第二步：获取API密钥
+
+1. 登录后进入个人中心
+2. 找到"API Keys管理"
+3. 点击"创建API密钥"
+4. 保存您的API密钥（请妥善保管）
+
 ## 功能
 
 - `gen_video` - 生成教学视频
