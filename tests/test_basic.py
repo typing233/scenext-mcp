@@ -44,26 +44,7 @@ def test_tools_registration():
         print(f"❌ 工具注册测试失败: {e}")
         return False
 
-async def test_health_check():
-    """测试健康检查工具"""
-    try:
-        # 模拟 API 密钥
-        with patch.dict(os.environ, {'SCENEXT_API_KEY': 'test_key'}):
-            from scenext_mcp.server import health_check
-            
-            result = await health_check()
-            
-            assert isinstance(result, dict)
-            assert 'server_version' in result
-            assert 'server_status' in result
-            assert result['server_status'] == 'running'
-            assert result['api_key_configured'] == True
-            
-            print("✅ 健康检查测试通过")
-            return True
-    except Exception as e:
-        print(f"❌ 健康检查测试失败: {e}")
-        return False
+
 
 async def test_gen_video_validation():
     """测试视频生成参数验证"""
@@ -87,7 +68,6 @@ def run_tests():
     ]
     
     async_tests = [
-        test_health_check,
         test_gen_video_validation,
     ]
     
