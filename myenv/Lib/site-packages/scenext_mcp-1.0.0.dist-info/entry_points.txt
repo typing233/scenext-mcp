@@ -1,0 +1,2 @@
+[console_scripts]
+scenext-mcp = scenext_mcp.server:main

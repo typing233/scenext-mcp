@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scenext-mcp"
+dynamic = ["version"]
+description = "Scenext MCP Server - AI视频生成服务的模型上下文协议服务器"
+readme = "README.md"
+license = "MIT"
+authors = [
+    {name = "Scenext Developer", email = "developer@scenext.cn"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+    "Topic :: Multimedia :: Video",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "mcp[cli]>=1.9.2",
+    "aiohttp>=3.12.6",
+    "python-dotenv>=1.0.0",
+]
+keywords = ["mcp", "model-context-protocol", "ai", "video", "generation", "scenext"]
+
+[project.urls]
+Homepage = "https://github.com/scenext/scenext-mcp"
+Repository = "https://github.com/scenext/scenext-mcp"
+Documentation = "https://github.com/scenext/scenext-mcp#readme"
+"Bug Reports" = "https://github.com/scenext/scenext-mcp/issues"
+
+[project.scripts]
+scenext-mcp = "scenext_mcp.server:main"
+
+[tool.setuptools]
+packages = ["scenext_mcp"]
+include-package-data = true
+
+[tool.setuptools.dynamic]
+version = {attr = "scenext_mcp._version.__version__"}
+
+[tool.setuptools.package-data]
+scenext_mcp = ["*.json", "*.md"]

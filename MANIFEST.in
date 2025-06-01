@@ -1,0 +1,21 @@
+# 包含在包中的文件
+include README.md
+include LICENSE
+include QUICKSTART.md
+include requirements.txt
+include mcp_config.json
+recursive-include scenext_mcp *.py
+recursive-include scenext_mcp *.json
+recursive-include scenext_mcp *.md
+
+# 排除不需要的文件
+exclude app.py
+exclude test_server.py
+exclude start.bat
+exclude start.ps1
+exclude .env
+exclude .env.example
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+recursive-exclude * .DS_Store
+exclude .gitignore
