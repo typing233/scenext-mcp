@@ -27,12 +27,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pytest pytest-asyncio
-        
-    - name: 代码风格检查
+          - name: 代码风格检查
       run: |
         pip install flake8
         flake8 scenext_mcp --count --select=E9,F63,F7,F82 --show-source --statistics
-          - name: 运行测试
+        
+    - name: 运行测试
       run: |
         python tests/test_basic.py
         
