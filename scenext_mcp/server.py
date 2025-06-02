@@ -224,7 +224,7 @@ def main():
     
     try:
         # 运行MCP服务器
-        mcp.run(transport="streamable-http")
+        mcp.run(transport="sse")
     except KeyboardInterrupt:
         print("\n服务器已停止")
     except Exception as e:
