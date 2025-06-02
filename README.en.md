@@ -30,7 +30,7 @@ Local access(UVX mode):
 }
 ```
 
-Remote access(SSE mode):
+Remote access(SSE):
 
 ```json
 {
@@ -38,6 +38,22 @@ Remote access(SSE mode):
     "scenext": {
       "type":"sse",
       "url":"https://mcp.scenext.cn/sse?api_key=your_actual_api_key_here"
+    }
+  }
+}
+```
+
+or:
+
+```json
+{
+  "mcpServers": {
+    "scenext": {
+      "type": "sse",
+      "url": "https://mcp.scenext.cn/sse",
+      "headers": {
+        "Authorization": "Bearer your_actual_api_key_here"
+      }
     }
   }
 }

@@ -30,7 +30,7 @@ pip install scenext-mcp
 }
 ```
 
-远程接入（SSE模式）：
+远程接入（SSE）：
 
 ```json
 {
@@ -38,6 +38,22 @@ pip install scenext-mcp
     "scenext": {
       "type":"sse",
       "url":"https://mcp.scenext.cn/sse?api_key=your_actual_api_key_here"
+    }
+  }
+}
+```
+
+或者：
+
+```json
+{
+  "mcpServers": {
+    "scenext": {
+      "type": "sse",
+      "url": "https://mcp.scenext.cn/sse",
+      "headers": {
+        "Authorization": "Bearer your_actual_api_key_here"
+      }
     }
   }
 }
