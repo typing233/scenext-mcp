@@ -45,15 +45,20 @@ class APIKeyExtractorMiddleware(BaseHTTPMiddleware):
         # 只处理 /sse 路径的GET请求
         if request.url.path == "/sse" and request.method == "GET":
             # 提取API Key
-            api_key = request.query_params.get('api_key') or request.query_params.get('ak')
+            api_key = request.query_params.get('api_key')
             
             if api_key:
                 RUNTIME_API_KEY = api_key
                 logger.info(f"从SSE请求提取到API Key: {api_key[:10]}...")
         
         # 继续正常处理请求
-        response = await call_next(request)
-        return response
+        try:
+            response = await call_next(request)
+            return response
+        except Exception as e:
+            logger.error(f"中间件处理请求时发生错误: {e}")
+            # 返回一个默认响应，避免中断请求处理
+            return Response(status_code=500, content=f"Server error: {str(e)}")
 
 class ScenextMCP(FastMCP):
     def sse_app(self, mount_path=None):
