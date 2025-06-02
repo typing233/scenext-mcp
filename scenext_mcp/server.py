@@ -13,9 +13,11 @@ import argparse
 from typing import List, Optional, Dict, Any
 import logging
 from dotenv import load_dotenv
-import time
 from scenext_mcp._version import __version__
-from urllib.parse import parse_qs, urlparse
+from starlette.requests import Request
+from starlette.responses import Response, JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.applications import Starlette
 
 # 加载环境变量
 load_dotenv()
@@ -52,22 +54,55 @@ def get_api_key():
     """获取API Key，优先使用运行时传入的"""
     return RUNTIME_API_KEY if RUNTIME_API_KEY else API_KEY
 
-# 添加中间件来处理URL参数
-@mcp.middleware
-async def extract_api_key_middleware(request, call_next):
-    """从URL查询参数中提取API Key"""
-    global RUNTIME_API_KEY
+class APIKeyExtractorMiddleware(BaseHTTPMiddleware):
+    """中间件：从SSE请求中提取API Key"""
     
-    # 检查是否有URL查询参数
-    if hasattr(request, 'url') and request.url.query:
-        query_params = parse_qs(request.url.query)
-        if 'api_key' in query_params or 'ak' in query_params:
-            # 支持api_key或ak参数
-            RUNTIME_API_KEY = query_params.get('api_key', query_params.get('ak'))[0]
-            logger.info(f"从URL参数获取到API Key: {RUNTIME_API_KEY[:10]}...")
+    async def dispatch(self, request: Request, call_next):
+        global RUNTIME_API_KEY
+        
+        # 只处理 /sse 路径的GET请求
+        if request.url.path == "/sse" and request.method == "GET":
+            # 提取API Key
+            api_key = request.query_params.get('api_key') or request.query_params.get('ak')
+            
+            if api_key:
+                RUNTIME_API_KEY = api_key
+                logger.info(f"从SSE请求提取到API Key: {api_key[:10]}...")
+        
+        # 继续正常处理请求
+        response = await call_next(request)
+        return response
+
+# 猴子补丁：重写sse_app方法以添加我们的中间件
+original_sse_app = mcp.sse_app
+
+def patched_sse_app(mount_path=None):
+    """添加API Key提取中间件的SSE应用"""
+    # 获取原始应用
+    app = original_sse_app(mount_path)
+    # 在现有中间件列表的开头添加我们的中间件
+    # 这样确保我们的中间件首先执行
+    existing_middleware = list(app.user_middleware)
     
-    response = await call_next(request)
-    return response
+    # 创建新的中间件列表，我们的中间件放在最前面
+    new_middleware = [
+        ("middleware", APIKeyExtractorMiddleware, {})
+    ] + existing_middleware
+    
+    # 创建新的Starlette应用，保持所有原有配置，只是添加我们的中间件
+    new_app = Starlette(
+        debug=app.debug,
+        routes=app.routes,
+        middleware=new_middleware,
+        exception_handlers=app.exception_handlers,
+        on_startup=app.on_startup,
+        on_shutdown=app.on_shutdown,
+        lifespan=app.lifespan_handler
+    )
+    return new_app
+
+# 应用猴子补丁
+mcp.sse_app = patched_sse_app
 
 @mcp.tool()
 async def gen_video(
