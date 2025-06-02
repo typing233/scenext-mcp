@@ -36,24 +36,6 @@ def setup_logging():
     return logging.getLogger(__name__)
 
 logger = setup_logging()
-
-# 创建MCP服务器
-mcp = FastMCP(
-    "Scenext", 
-    description=f"Scenext视频生成服务器 v{__version__} - 提供视频生成和状态查询功能",
-    host="0.0.0.0",
-    port=8000
-)
-
-# 配置
-API_BASE_URL = "https://api.scenext.cn/api"
-API_KEY = os.getenv("SCENEXT_API_KEY", "YOUR_API_KEY")
-DEFAULT_QUALITY = os.getenv("SCENEXT_DEFAULT_QUALITY", "m")
-
-def get_api_key():
-    """获取API Key，优先使用运行时传入的"""
-    return RUNTIME_API_KEY if RUNTIME_API_KEY else API_KEY
-
 class APIKeyExtractorMiddleware(BaseHTTPMiddleware):
     """中间件：从SSE请求中提取API Key"""
     
@@ -73,38 +55,29 @@ class APIKeyExtractorMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         return response
 
-# 猴子补丁：重写sse_app方法以添加我们的中间件
-original_sse_app = mcp.sse_app
+class ScenextMCP(FastMCP):
+    def sse_app(self, mount_path=None):
+        app = super().sse_app(mount_path)
+        app.add_middleware(APIKeyExtractorMiddleware)
+        return app
+    
+# 创建MCP服务器
+mcp = ScenextMCP(
+    "Scenext", 
+    description=f"Scenext视频生成服务器 v{__version__} - 提供视频生成和状态查询功能",
+    host="0.0.0.0",
+    port=8000
+)
 
-def patched_sse_app(mount_path=None):
-    """添加API Key提取中间件的SSE应用"""
-    # 获取原始应用
-    app = original_sse_app(mount_path)
-    # 在现有中间件列表的开头添加我们的中间件
-    existing_middleware = list(app.user_middleware)
-    
-    # 创建新的中间件列表，我们的中间件放在最前面
-    new_middleware = [
-        ("middleware", APIKeyExtractorMiddleware, {})
-    ] + existing_middleware
-    
-    # 创建新的Starlette应用，保持所有原有配置，只是添加我们的中间件
-    new_app = Starlette(
-        debug=app.debug,
-        routes=app.routes,
-        middleware=new_middleware,
-        exception_handlers=app.exception_handlers
-    )
-    
-    # 手动转移启动和关闭事件处理程序
-    if hasattr(app, 'router'):
-        if hasattr(app.router, 'lifespan'):
-            new_app.router.lifespan = app.router.lifespan
-            
-    return new_app
+# 配置
+API_BASE_URL = "https://api.scenext.cn/api"
+API_KEY = os.getenv("SCENEXT_API_KEY", "YOUR_API_KEY")
+DEFAULT_QUALITY = os.getenv("SCENEXT_DEFAULT_QUALITY", "m")
 
-# 应用猴子补丁
-mcp.sse_app = patched_sse_app
+def get_api_key():
+    """获取API Key，优先使用运行时传入的"""
+    return RUNTIME_API_KEY if RUNTIME_API_KEY else API_KEY
+
 
 @mcp.tool()
 async def gen_video(
