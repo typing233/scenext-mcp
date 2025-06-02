@@ -14,7 +14,7 @@ from typing import List, Optional, Dict, Any
 import logging
 from dotenv import load_dotenv
 import time
-from ._version import __version__
+from scenext_mcp._version import __version__
 
 # 加载环境变量
 load_dotenv()
@@ -222,7 +222,7 @@ def main():
     
     try:
         # 运行MCP服务器
-        mcp.run()
+        mcp.run(transport="streamable-http")
     except KeyboardInterrupt:
         print("\n服务器已停止")
     except Exception as e:
