@@ -2,7 +2,7 @@
   "mcpServers": {
     "scenext": {
       "command": "uvx", 
-      "args": ["scenext-mcp", "-y"],
+      "args": ["scenext-mcp"],
       "env": {
         "SCENEXT_API_KEY": "your_actual_api_key_here"
       }

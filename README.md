@@ -1,6 +1,6 @@
 # Scenext MCP Server
 
-一个集成 Scenext AI 视频生成平台的 MCP 服务器，允许通过模型上下文协议生成教学视频。
+一个集成 [Scenext](https://scenext.cn) AI 视频生成平台的 MCP 服务器，可以根据题目生成教学讲解视频。
 
 ## 安装
 
@@ -17,7 +17,7 @@ pip install scenext-mcp
   "mcpServers": {
     "scenext": {
       "command": "uvx",
-      "args": ["-y","scenext-mcp"],
+      "args": ["scenext-mcp"],
       "env": {
         "SCENEXT_API_KEY": "your_api_key_here"
       }

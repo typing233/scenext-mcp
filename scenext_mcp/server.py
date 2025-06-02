@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Scenext MCP Server - AI视频生成服务
-支持通过模型上下文协议生成教学视频
+支持生成教学视频
 """
 
 from mcp.server.fastmcp import FastMCP
@@ -51,7 +51,7 @@ async def gen_video(
     quality: str = DEFAULT_QUALITY
 ) -> Dict[str, Any]:
     """
-    生成教学视频
+    生成教学讲解视频
     
     Args:
         question: 问题内容（文本形式），question和questionImages中至少输入一个
@@ -61,7 +61,7 @@ async def gen_video(
         quality: 视频质量，可选值：l(低)、m(中)、h(高)，默认为配置的默认质量
     
     Returns:
-        包含任务ID和状态的字典
+        包含任务ID的字典
     """
     # 验证至少有question或questionImages其中一个
     if not question.strip() and not (question_images and len(question_images) > 0):
@@ -127,7 +127,7 @@ async def query_video_status(task_id: str) -> Dict[str, Any]:
         包含任务状态信息的字典
         状态说明：
         - IN_PROGRESS: 任务正在处理中，可以继续轮询
-        - COMPLETED: 任务已成功完成，可以获取结果
+        - COMPLETED: 任务已成功完成，返回信息会包含生成结果
         - FAILED: 任务处理失败，请检查错误信息
     """
     if not task_id.strip():
@@ -209,22 +209,22 @@ def main():
     
     # 检查API密钥
     if API_KEY == "YOUR_API_KEY":
-        print("❌ 错误: 请设置环境变量 SCENEXT_API_KEY")
-        print("   export SCENEXT_API_KEY=your_actual_api_key")
+        print("错误: 请设置环境变量 SCENEXT_API_KEY")
+        print("export SCENEXT_API_KEY=your_actual_api_key")
         sys.exit(1)
     
-    print(f"🚀 启动Scenext MCP服务器 v{__version__}")
-    print(f"🔑 API密钥: {API_KEY[:10]}..." if len(API_KEY) > 10 else "未配置")
-    print(f"🌐 API地址: {API_BASE_URL}")
-    print(f"📝 日志级别: {args.log_level}")
-    print(f"⚙️  默认质量: {DEFAULT_QUALITY}")
+    print(f"启动Scenext MCP服务器 v{__version__}")
+    print(f"API密钥: {API_KEY[:10]}..." if len(API_KEY) > 10 else "未配置")
+    print(f"API地址: {API_BASE_URL}")
+    print(f"日志级别: {args.log_level}")
+    print(f"默认质量: {DEFAULT_QUALITY}")
     print("-" * 60)
     
     try:
         # 运行MCP服务器
         mcp.run()
     except KeyboardInterrupt:
-        print("\n👋 服务器已停止")
+        print("\n服务器已停止")
     except Exception as e:
         logger.error(f"服务器启动失败: {e}")
         sys.exit(1)

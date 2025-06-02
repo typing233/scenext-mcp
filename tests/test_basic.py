@@ -17,10 +17,10 @@ def test_module_import():
         from scenext_mcp.server import mcp
         assert __version__ is not None
         assert mcp.name == "Scenext"
-        print(f"✅ 模块导入测试通过 - 版本: {__version__}")
+        print(f"模块导入测试通过 - 版本: {__version__}")
         return True
     except Exception as e:
-        print(f"❌ 模块导入测试失败: {e}")
+        print(f"模块导入测试失败: {e}")
         return False
 
 def test_tools_registration():
@@ -38,10 +38,10 @@ def test_tools_registration():
         for expected_tool in expected_tools:
             assert expected_tool in tool_names, f"工具 {expected_tool} 未注册"
         
-        print(f"✅ 工具注册测试通过 - 注册工具: {tool_names}")
+        print(f"工具注册测试通过 - 注册工具: {tool_names}")
         return True
     except Exception as e:
-        print(f"❌ 工具注册测试失败: {e}")
+        print(f"工具注册测试失败: {e}")
         return False
 
 
@@ -51,15 +51,15 @@ async def test_gen_video_validation():
     try:
         from scenext_mcp.server import gen_video
         
-        print("✅ 视频生成验证测试通过")
+        print("视频生成验证测试通过")
         return True
     except Exception as e:
-        print(f"❌ 视频生成验证测试失败: {e}")
+        print(f"视频生成验证测试失败: {e}")
         return False
 
 def run_tests():
     """运行所有测试"""
-    print("🧪 运行 Scenext MCP Server 测试...")
+    print("运行 Scenext MCP Server 测试...")
     print("-" * 50)
     
     tests = [
@@ -92,10 +92,10 @@ def run_tests():
     print(f"测试结果: {passed}/{total} 通过")
     
     if passed == total:
-        print("🎉 所有测试通过！")
+        print("所有测试通过！")
         return True
     else:
-        print("❌ 部分测试失败")
+        print("部分测试失败")
         return False
 
 if __name__ == "__main__":
