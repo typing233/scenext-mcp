@@ -34,7 +34,9 @@ logger = setup_logging()
 # 创建MCP服务器
 mcp = FastMCP(
     "Scenext", 
-    description=f"Scenext视频生成服务器 v{__version__} - 提供视频生成和状态查询功能"
+    description=f"Scenext视频生成服务器 v{__version__} - 提供视频生成和状态查询功能",
+    host="0.0.0.0",
+    port=8000
 )
 
 # 配置
