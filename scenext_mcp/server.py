@@ -81,7 +81,6 @@ def patched_sse_app(mount_path=None):
     # 获取原始应用
     app = original_sse_app(mount_path)
     # 在现有中间件列表的开头添加我们的中间件
-    # 这样确保我们的中间件首先执行
     existing_middleware = list(app.user_middleware)
     
     # 创建新的中间件列表，我们的中间件放在最前面
@@ -94,11 +93,14 @@ def patched_sse_app(mount_path=None):
         debug=app.debug,
         routes=app.routes,
         middleware=new_middleware,
-        exception_handlers=app.exception_handlers,
-        on_startup=app.on_startup,
-        on_shutdown=app.on_shutdown,
-        lifespan=app.lifespan_handler
+        exception_handlers=app.exception_handlers
     )
+    
+    # 手动转移启动和关闭事件处理程序
+    if hasattr(app, 'router'):
+        if hasattr(app.router, 'lifespan'):
+            new_app.router.lifespan = app.router.lifespan
+            
     return new_app
 
 # 应用猴子补丁
