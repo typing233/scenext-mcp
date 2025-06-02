@@ -50,7 +50,7 @@ class APIKeyAuthMiddleware(BaseHTTPMiddleware):
             return api_key
             
         # 方法2: 从Authorization header获取
-        auth_header = request.headers.get("authorization", "")
+        auth_header = request.headers.get("Authorization", "")
         if auth_header.startswith("Bearer "):
             return auth_header[7:]
             
