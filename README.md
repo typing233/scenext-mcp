@@ -10,10 +10,34 @@ An MCP server that integrates with [Scenext](https://scenext.cn) AI video genera
 
 ## Quick Start / 快速开始
 
-```bash
-pip install scenext-mcp
+本地接入（uvx模式）：
+
+```json
+{
+  "mcpServers": {
+    "scenext": {
+      "command": "uvx", 
+      "args": ["scenext-mcp"],
+      "env": {
+        "SCENEXT_API_KEY": "your_actual_api_key_here"
+      }
+    }
+  }
+}
 ```
 
+远程接入（SSE模式）：
+
+```json
+{
+  "mcpServers": {
+    "scenext": {
+      "type":"sse",
+      "url":"https://mcp.scenext.cn/sse?api_key=your_actual_api_key_here"
+    }
+  }
+}
+```
 For detailed documentation:
 - [English Documentation](README.en.md)
 - [中文文档](README.zh.md)

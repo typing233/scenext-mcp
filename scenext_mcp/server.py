@@ -15,9 +15,13 @@ import logging
 from dotenv import load_dotenv
 import time
 from scenext_mcp._version import __version__
+from urllib.parse import parse_qs, urlparse
 
 # 加载环境变量
 load_dotenv()
+
+# 全局变量存储运行时API Key
+RUNTIME_API_KEY = None
 
 
 def setup_logging():
@@ -44,6 +48,27 @@ API_BASE_URL = "https://api.scenext.cn/api"
 API_KEY = os.getenv("SCENEXT_API_KEY", "YOUR_API_KEY")
 DEFAULT_QUALITY = os.getenv("SCENEXT_DEFAULT_QUALITY", "m")
 
+def get_api_key():
+    """获取API Key，优先使用运行时传入的"""
+    return RUNTIME_API_KEY if RUNTIME_API_KEY else API_KEY
+
+# 添加中间件来处理URL参数
+@mcp.middleware
+async def extract_api_key_middleware(request, call_next):
+    """从URL查询参数中提取API Key"""
+    global RUNTIME_API_KEY
+    
+    # 检查是否有URL查询参数
+    if hasattr(request, 'url') and request.url.query:
+        query_params = parse_qs(request.url.query)
+        if 'api_key' in query_params or 'ak' in query_params:
+            # 支持api_key或ak参数
+            RUNTIME_API_KEY = query_params.get('api_key', query_params.get('ak'))[0]
+            logger.info(f"从URL参数获取到API Key: {RUNTIME_API_KEY[:10]}...")
+    
+    response = await call_next(request)
+    return response
+
 @mcp.tool()
 async def gen_video(
     question: str = "",
@@ -65,13 +90,16 @@ async def gen_video(
     Returns:
         包含任务ID的字典
     """
+    current_api_key = get_api_key()
+    if current_api_key == "YOUR_API_KEY":
+        return {"error": "请提供有效的API Key,若无API KEY请到scenext.cn平台申请"}
     # 验证至少有question或questionImages其中一个
     if not question.strip() and not (question_images and len(question_images) > 0):
         return {"error": "question和questionImages中至少输入一个"}
     
     url = f"{API_BASE_URL}/gen_video"
     headers = {
-        "Authorization": f"Bearer {API_KEY}",
+        "Authorization": f"Bearer {current_api_key}",
         "Content-Type": "application/json"
     }
 
@@ -126,18 +154,21 @@ async def query_video_status(task_id: str) -> Dict[str, Any]:
         task_id: 视频生成任务ID
     
     Returns:
-        包含任务状态信息的字典
+        包含任务状态信息与任务结果的字典
         状态说明：
         - IN_PROGRESS: 任务正在处理中，可以继续轮询
         - COMPLETED: 任务已成功完成，返回信息会包含生成结果
         - FAILED: 任务处理失败，请检查错误信息
     """
+    current_api_key = get_api_key()
+    if current_api_key == "YOUR_API_KEY":
+        return {"error": "请提供有效的API Key,若无API KEY请到scenext.cn平台申请"}
     if not task_id.strip():
         return {"error": "任务ID不能为空"}
     
     url = f"{API_BASE_URL}/get_status/{task_id}"
     headers = {
-        "Authorization": f"Bearer {API_KEY}"
+        "Authorization": f"Bearer {current_api_key}"
     }
     
     try:
@@ -184,7 +215,19 @@ def main():
   SCENEXT_API_KEY         - Scenext API密钥（必填）
   SCENEXT_DEFAULT_QUALITY - 默认视频质量：l/m/h（可选）
   SCENEXT_LOG_LEVEL       - 日志级别（可选）
+
+SSE接入方式:
+  在MCP客户端配置中使用: https://mcp.scenext.cn/sse?api_key=YOUR_API_KEY
         """
+    )
+
+    # 添加位置参数用于指定transport类型
+    parser.add_argument(
+        'transport', 
+        nargs='?', 
+        default='stdio', 
+        choices=['stdio', 'sse', 'streamable-http'],
+        help='传输类型 (stdio用于本地uvx, sse用于远程部署)'
     )
     
     parser.add_argument(
@@ -209,24 +252,31 @@ def main():
     global logger
     logger = setup_logging()
     
-    # 检查API密钥
-    if API_KEY == "YOUR_API_KEY":
-        print("错误: 请设置环境变量 SCENEXT_API_KEY")
-        print("export SCENEXT_API_KEY=your_actual_api_key")
-        sys.exit(1)
-    
-    print(f"启动Scenext MCP服务器 v{__version__}")
-    print(f"API密钥: {API_KEY[:10]}..." if len(API_KEY) > 10 else "未配置")
-    print(f"API地址: {API_BASE_URL}")
-    print(f"日志级别: {args.log_level}")
-    print(f"默认质量: {DEFAULT_QUALITY}")
-    print("-" * 60)
+    if args.transport == "stdio":
+        # STDIO模式：用于本地uvx调用
+        logger.info(f"启动Scenext MCP服务器 v{__version__} (STDIO模式)")
+        print(f"API密钥: {API_KEY[:10]}..." if len(API_KEY) > 10 else "未配置")
+    elif args.transport == "sse":
+        print(f"启动Scenext MCP服务器 v{__version__}")
+        print(f"传输方式: SSE (远程接入)")
+        print(f"API地址: {API_BASE_URL}")
+        print(f"日志级别: {args.log_level}")
+        print(f"默认质量: {DEFAULT_QUALITY}")
+        print("-" * 60)
+    elif args.transport == "streamable-http":
+        print(f"启动Scenext MCP服务器 v{__version__}")
+        print(f"传输方式: streamable-http (远程接入)")
+        print(f"API地址: {API_BASE_URL}")
+        print(f"日志级别: {args.log_level}")
+        print(f"默认质量: {DEFAULT_QUALITY}")
+        print("-" * 60)
     
     try:
         # 运行MCP服务器
-        mcp.run(transport="sse")
+        mcp.run(transport=args.transport)
     except KeyboardInterrupt:
-        print("\n服务器已停止")
+        if args.transport != "stdio":
+            print("\n服务器已停止")
     except Exception as e:
         logger.error(f"服务器启动失败: {e}")
         sys.exit(1)

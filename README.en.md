@@ -14,15 +14,30 @@ pip install scenext-mcp
 
 Add the following to your Claude Desktop configuration file:
 
+Local access(UVX mode):
+
 ```json
 {
   "mcpServers": {
     "scenext": {
-      "command": "uvx",
+      "command": "uvx", 
       "args": ["scenext-mcp"],
       "env": {
-        "SCENEXT_API_KEY": "your_api_key_here"
+        "SCENEXT_API_KEY": "your_actual_api_key_here"
       }
+    }
+  }
+}
+```
+
+Remote access(SSE mode):
+
+```json
+{
+  "mcpServers": {
+    "scenext": {
+      "type":"sse",
+      "url":"https://mcp.scenext.cn/sse?api_key=your_actual_api_key_here"
     }
   }
 }
