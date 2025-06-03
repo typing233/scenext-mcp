@@ -14,8 +14,9 @@ import logging
 from dotenv import load_dotenv
 from scenext_mcp._version import __version__
 from starlette.requests import Request
-from starlette.responses import JSONResponse
-from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
+from starlette.applications import Starlette
+import json
 
 # 加载环境变量
 load_dotenv()
@@ -34,15 +35,10 @@ def setup_logging():
 
 logger = setup_logging()
 
-
-class APIKeyAuthMiddleware(BaseHTTPMiddleware):
+async def api_key_auth_middleware(request: Request, call_next):
     """API Key认证中间件"""
     
-    def __init__(self, app, require_auth_for_sse: bool = True):
-        super().__init__(app)
-        self.require_auth_for_sse = require_auth_for_sse
-        
-    async def extract_api_key(self, request: Request) -> Optional[str]:
+    async def extract_api_key(request: Request) -> Optional[str]:
         """从请求中提取API key"""
         # 方法1: 从URL查询参数获取
         api_key = request.query_params.get("api_key")
@@ -61,40 +57,38 @@ class APIKeyAuthMiddleware(BaseHTTPMiddleware):
             
         return None
     
-    async def dispatch(self, request: Request, call_next):
-        # 只对SSE和streamable-http端点进行认证
-        if not self.require_auth_for_sse:
-            return await call_next(request)
-            
-        # 检查是否是需要认证的端点
-        path = request.url.path
-        if path in ["/sse", "/mcp"]:
-            api_key = await self.extract_api_key(request)
-            
-            if not api_key:
-                logger.warning(f"缺少API key: {path}")
-                return JSONResponse(
-                    {"error": "API key is required. Provide it via ?api_key=xxx, Authorization header, or X-API-Key header"},
-                    status_code=401
-                )
-            
-                
-            # 将API key存储到全局变量中供工具函数使用
-            global RUNTIME_API_KEY
-            RUNTIME_API_KEY = api_key
-            logger.info(f"API key获取成功: {api_key[:10]}...")
+    # 检查是否是需要认证的端点
+    path = request.url.path
+    if path in ["/sse", "/mcp"] or path.startswith("/mcp"):
+        api_key = await extract_api_key(request)
         
-        response = await call_next(request)
-        return response   
+        if not api_key:
+            logger.warning(f"缺少API key: {path}")
+            response_body = json.dumps({
+                "error": "API key is required. Provide it via ?api_key=xxx, Authorization header, or X-API-Key header"
+            }).encode()
+            
+            return Response(
+                content=response_body,
+                status_code=401,
+                media_type="application/json"
+            )
+        
+        # 将API key存储到全局变量中供工具函数使用
+        global RUNTIME_API_KEY
+        RUNTIME_API_KEY = api_key
+        logger.info(f"API key获取成功: {api_key[:10]}...")
+    
+    response = await call_next(request)
+    return response
 
 # 创建MCP服务器
 mcp = FastMCP(
     "Scenext", 
     description=f"Scenext视频生成服务器 v{__version__} - 提供视频生成和状态查询功能",
-    host="0.0.0.0",
+    host="127.0.0.1",
     port=8000
 )
-
 
 # 配置
 API_BASE_URL = "https://api.scenext.cn/api"
@@ -146,7 +140,6 @@ async def gen_video(
         "answerImages": answer_images or [],
         "quality": quality,
     }
-
 
     try:
         async with aiohttp.ClientSession() as session:
@@ -236,26 +229,42 @@ async def query_video_status(task_id: str) -> Dict[str, Any]:
         logger.error(f"未知错误: {e}")
         return {"error": f"未知错误: {str(e)}"}
 
+def create_auth_wrapped_app(transport_type: str) -> Starlette:
+    """创建带认证的应用包装器"""
+    if transport_type == "sse":
+        base_app = mcp.sse_app()
+    elif transport_type == "streamable-http":
+        base_app = mcp.streamable_http_app()
+    else:
+        raise ValueError(f"Unsupported transport type: {transport_type}")
+    
+    # 添加中间件到现有应用
+    base_app.add_middleware(api_key_auth_middleware)
+    return base_app
+
+# 重写mcp的app方法以包含认证
 def add_auth_middleware_to_app(transport_type: str, enable_auth: bool = True):
     """为指定的transport添加认证中间件"""
     if not enable_auth or transport_type == "stdio":
         return
         
     if transport_type == "sse":
-        # 获取SSE应用并添加中间件
-        sse_app = mcp.sse_app()
-        sse_app.add_middleware(APIKeyAuthMiddleware, require_auth_for_sse=True)
-        # 重新设置sse_app方法以返回带中间件的应用
+        # 重写sse_app方法
         original_sse_app = mcp.sse_app
-        mcp.sse_app = lambda mount_path=None: sse_app
+        def sse_app_with_auth(mount_path=None):
+            app = original_sse_app(mount_path)
+            app.middleware('http')(api_key_auth_middleware)
+            return app
+        mcp.sse_app = sse_app_with_auth
         
     elif transport_type == "streamable-http":
-        # 获取Streamable HTTP应用并添加中间件
-        http_app = mcp.streamable_http_app()
-        http_app.add_middleware(APIKeyAuthMiddleware, require_auth_for_sse=True)
-        # 重新设置streamable_http_app方法以返回带中间件的应用
-        original_http_app = mcp.streamable_http_app
-        mcp.streamable_http_app = lambda: http_app
+        # 重写streamable_http_app方法
+        original_streamable_http_app = mcp.streamable_http_app
+        def streamable_http_app_with_auth():
+            app = original_streamable_http_app()
+            app.middleware('http')(api_key_auth_middleware)
+            return app
+        mcp.streamable_http_app = streamable_http_app_with_auth
 
 def main():
     """CLI入口点"""
@@ -312,22 +321,14 @@ SSE接入方式:
         # STDIO模式：用于本地uvx调用
         logger.info(f"启动Scenext MCP服务器 v{__version__} (STDIO模式)")
         print(f"API密钥: {API_KEY[:10]}..." if len(API_KEY) > 10 else "未配置")
-    elif args.transport == "sse":
+    elif args.transport in ["sse", "streamable-http"]:
         print(f"启动Scenext MCP服务器 v{__version__}")
-        print(f"传输方式: SSE (远程接入)")
+        print(f"传输方式: {args.transport} (远程接入)")
         print(f"API地址: {API_BASE_URL}")
         print(f"日志级别: {args.log_level}")
         print(f"默认质量: {DEFAULT_QUALITY}")
         print("-" * 60)
-        add_auth_middleware_to_app("sse", True)
-    elif args.transport == "streamable-http":
-        print(f"启动Scenext MCP服务器 v{__version__}")
-        print(f"传输方式: streamable-http (远程接入)")
-        print(f"API地址: {API_BASE_URL}")
-        print(f"日志级别: {args.log_level}")
-        print(f"默认质量: {DEFAULT_QUALITY}")
-        print("-" * 60)
-        add_auth_middleware_to_app("streamable-http", True)
+        add_auth_middleware_to_app(args.transport, True)
     
     try:
         mcp.run(transport=args.transport)
