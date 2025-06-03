@@ -86,7 +86,7 @@ async def api_key_auth_middleware(request: Request, call_next):
 mcp = FastMCP(
     "Scenext", 
     description=f"Scenext视频生成服务器 v{__version__} - 提供视频生成和状态查询功能",
-    host="127.0.0.1",
+    host="0.0.0.0",
     port=8000
 )
 
