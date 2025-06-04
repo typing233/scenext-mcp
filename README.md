@@ -26,27 +26,14 @@ An MCP server that integrates with [Scenext](https://scenext.cn) AI video genera
 }
 ```
 
-远程接入（SSE）：
+远程接入（streamable-http）：
 
 ```json
 {
   "mcpServers": {
     "scenext": {
-      "type":"sse",
-      "url":"https://mcp.scenext.cn/sse?api_key=your_actual_api_key_here"
-    }
-  }
-}
-```
-
-或者：
-
-```json
-{
-  "mcpServers": {
-    "scenext": {
-      "type": "sse",
-      "url": "https://mcp.scenext.cn/sse",
+      "type": "streamable-http",
+      "url": "https://mcp.scenext.cn/mcp",
       "headers": {
         "Authorization": "Bearer your_actual_api_key_here"
       }

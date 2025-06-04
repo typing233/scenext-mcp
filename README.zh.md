@@ -4,12 +4,6 @@
 
 一个集成 [Scenext](https://scenext.cn) AI 视频生成平台的 MCP 服务器，可以根据题目生成教学讲解视频。
 
-## 安装
-
-```bash
-pip install scenext-mcp
-```
-
 ## 配置
 
 在 Claude Desktop 的配置文件中添加：
@@ -30,27 +24,14 @@ pip install scenext-mcp
 }
 ```
 
-远程接入（SSE）：
+远程接入（streamable-http）：
 
 ```json
 {
   "mcpServers": {
     "scenext": {
-      "type":"sse",
-      "url":"https://mcp.scenext.cn/sse?api_key=your_actual_api_key_here"
-    }
-  }
-}
-```
-
-或者：
-
-```json
-{
-  "mcpServers": {
-    "scenext": {
-      "type": "sse",
-      "url": "https://mcp.scenext.cn/sse",
+      "type": "streamable-http",
+      "url": "https://mcp.scenext.cn/mcp",
       "headers": {
         "Authorization": "Bearer your_actual_api_key_here"
       }
@@ -76,33 +57,6 @@ pip install scenext-mcp
 
 - `gen_video` - 生成教学视频
 - `query_video_status` - 查询视频生成状态
-
-## 开发
-
-```bash
-# 克隆仓库
-git clone https://github.com/typing233/scenext-mcp.git
-cd scenext-mcp
-
-# 安装依赖
-pip install -e .
-
-# 运行测试
-python tests/test_basic.py
-```
-
-## 发布新版本
-
-1. 编辑 `scenext_mcp/_version.py` 中的版本号
-2. 提交更改并创建标签：
-   ```bash
-   git add .
-   git commit -m "Release version x.x.x"
-   git tag vx.x.x
-   git push origin main
-   git push origin vx.x.x
-   ```
-3. GitHub Actions 会自动发布到 PyPI
 
 ## 许可证
 
