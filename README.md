@@ -2,6 +2,8 @@
 
 [English](README.en.md) | [中文](README.zh.md)
 
+[![smithery badge](https://smithery.ai/badge/@typing233/scenext-mcp)](https://smithery.ai/server/@typing233/scenext-mcp)
+
 ---
 
 An MCP server that integrates with [Scenext](https://scenext.cn) AI video generation platform to create educational explanation videos based on topics.
@@ -9,6 +11,14 @@ An MCP server that integrates with [Scenext](https://scenext.cn) AI video genera
 一个集成 [Scenext](https://scenext.cn) AI 视频生成平台的 MCP 服务器，可以根据题目生成教学讲解视频。
 
 ## Quick Start / 快速开始
+
+### Installing via Smithery
+
+To install scenext-mcp for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@typing233/scenext-mcp):
+
+```bash
+npx -y @smithery/cli install @typing233/scenext-mcp --client claude
+```
 
 本地接入（uvx模式）：
 
