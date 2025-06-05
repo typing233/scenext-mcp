@@ -33,7 +33,7 @@ An MCP server that integrates with [Scenext](https://scenext.cn) AI video genera
   "mcpServers": {
     "scenext": {
       "type": "streamable-http",
-      "url": "https://mcp.scenext.cn/mcp",
+      "url": "https://mcp.scenext.cn/mcp/",
       "headers": {
         "Authorization": "Bearer your_actual_api_key_here"
       }
@@ -41,6 +41,7 @@ An MCP server that integrates with [Scenext](https://scenext.cn) AI video genera
   }
 }
 ```
+Some clients do not support the headers field. You can manually configure and add the request header "Authorization=Bearer your_actual_api_key_here".
 
 For detailed documentation:
 - [English Documentation](README.en.md)

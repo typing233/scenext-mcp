@@ -31,7 +31,7 @@
   "mcpServers": {
     "scenext": {
       "type": "streamable-http",
-      "url": "https://mcp.scenext.cn/mcp",
+      "url": "https://mcp.scenext.cn/mcp/",
       "headers": {
         "Authorization": "Bearer your_actual_api_key_here"
       }
@@ -39,6 +39,7 @@
   }
 }
 ```
+有的客户端不支持headers字段，可以手动配置添加请求头Authorization=Bearer your_actual_api_key_here
 
 ## 获取API KEY
 

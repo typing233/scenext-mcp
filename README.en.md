@@ -24,6 +24,7 @@ Local access(UVX mode):
   }
 }
 ```
+Some clients do not support the headers field. You can manually configure and add the request header "Authorization=Bearer your_actual_api_key_here".
 
 Remote access(streamable-http):
 
@@ -32,7 +33,7 @@ Remote access(streamable-http):
   "mcpServers": {
     "scenext": {
       "type": "streamable-http",
-      "url": "https://mcp.scenext.cn/mcp",
+      "url": "https://mcp.scenext.cn/mcp/",
       "headers": {
         "Authorization": "Bearer your_actual_api_key_here"
       }
