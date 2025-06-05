@@ -13,7 +13,6 @@ import argparse
 from typing import List, Optional, Dict, Any
 import logging
 from dotenv import load_dotenv
-from scenext_mcp._version import __version__
 
 # 加载环境变量
 load_dotenv()
@@ -32,7 +31,7 @@ logger = setup_logging()
 # 创建MCP服务器
 mcp = FastMCP(
     "Scenext", 
-    instructions=f"Scenext视频生成服务器 v{__version__} - 提供教学视频生成和状态查询功能"
+    instructions=f"Scenext视频生成服务器 - 提供教学视频生成和状态查询功能"
 )
 
 # 配置
@@ -254,7 +253,7 @@ MCP客户端配置示例:
     parser.add_argument(
         "--version", 
         action="version", 
-        version=f"scenext-mcp {__version__}"
+        version="scenext-mcp"
     )
     
     args = parser.parse_args()
@@ -267,9 +266,9 @@ MCP客户端配置示例:
     logger = setup_logging()
     
     if args.transport == "stdio":
-        logger.info(f"启动Scenext MCP服务器 v{__version__} (STDIO模式)")
+        logger.info(f"启动Scenext MCP服务器 (STDIO模式)")
     elif args.transport in ["streamable-http"]:
-        print(f"启动Scenext MCP服务器 v{__version__}")
+        print(f"启动Scenext MCP服务器 ")
         print(f"传输方式: {args.transport} (远程接入)")
         print(f"API地址: {API_BASE_URL}")
         print(f"认证方式: 请求头 (Authorization: Bearer <token> 或 X-API-Key: <token>)")

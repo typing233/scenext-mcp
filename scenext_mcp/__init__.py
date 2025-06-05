@@ -12,6 +12,6 @@ __author__ = "Scenext"
 __email__ = "support@lynkframe.com"
 __description__ = "Scenext MCP Server - AI视频生成服务的模型上下文协议服务器"
 
-from .server import main
+from scenext_mcp.server import main
 
 __all__ = ["main", "__version__"]
