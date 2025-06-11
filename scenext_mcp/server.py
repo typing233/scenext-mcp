@@ -69,7 +69,7 @@ async def gen_video(
     quality: str = DEFAULT_QUALITY
 ) -> Dict[str, Any]:
     """
-    生成教学讲解视频
+    生成教学讲解视频,生成时间大约需要10到20分钟，根据题目难度来定
     
     Args:
         question: 问题内容（文本形式），question和questionImages中至少输入一个
@@ -147,7 +147,7 @@ async def query_video_status(task_id: str) -> Dict[str, Any]:
         task_id: 视频生成任务ID
     
     Returns:
-        包含任务状态信息与任务结果的字典
+        包含任务状态信息与任务结果的字典，任务结果中的视频链接请用"[链接文本](视频URL)"形式展示给用户，图片链接请用"![链接文本](图片URL)"形式展示给用户
     """
     
     # 从请求头获取API KEY
