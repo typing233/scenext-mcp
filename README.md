@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/typing233-scenext-mcp-badge.png)](https://mseep.ai/app/typing233-scenext-mcp)
+
 # Scenext MCP Server
 
 [English](README.en.md) | [中文](README.zh.md)
